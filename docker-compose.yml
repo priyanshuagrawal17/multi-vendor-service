@@ -1,0 +1,41 @@
+version: "3.8"
+services:
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - MONGO_URI=mongodb://mongo:27017/
+    depends_on:
+      - redis
+      - mongo
+  worker:
+    build: ./worker
+    depends_on:
+      - api
+      - redis
+      - mongo
+    environment:
+      - REDIS_HOST=redis
+      - MONGO_URI=mongodb://mongo:27017/
+      - VENDOR_SYNC_URL=http://vendor_sync:9000/data
+      - VENDOR_ASYNC_URL=http://vendor_async:9001/data
+  vendor_sync:
+    build: ./vendor_sync
+    ports:
+      - "9000:9000"
+  vendor_async:
+    build: ./vendor_async
+    ports:
+      - "9001:9001"
+    environment:
+      - WEBHOOK_URL=http://api:8000/vendor-webhook/async
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
